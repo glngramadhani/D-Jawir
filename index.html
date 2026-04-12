@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Angkringan D'jawir - Full Struk Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Desain Motif Batik Jawa */
+        .batik-header {
+            background-color: #431407;
+            background-image:  linear-gradient(135deg, #5c1f0e 25%, transparent 25%), 
+                               linear-gradient(225deg, #5c1f0e 25%, transparent 25%), 
+                               linear-gradient(45deg, #5c1f0e 25%, transparent 25%), 
+                               linear-gradient(315deg, #5c1f0e 25%, #431407 25%);
+            background-position:  10px 0, 10px 0, 0 0, 0 0;
+            background-size:  20px 20px;
+            background-repeat: repeat;
+        }
+
+        .bg-batik-light {
+            background-color: #f5f5f4;
+            background-image: radial-gradient(#d6d3d1 0.5px, transparent 0.5px);
+            background-size: 10px 10px;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; padding: 0; margin: 0; }
+        }
+
+        .print-only { display: none; }
+        .font-mono-receipt { font-family: 'Courier New', Courier, monospace; }
+        
+        .card-menu:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="bg-batik-light font-sans text-stone-800 min-h-screen">
+
+    <header class="batik-header text-white p-6 shadow-2xl no-print border-b-4 border-orange-300">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-center md:text-left">
+                <h1 class="text-3xl font-black tracking-widest uppercase" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5)">
+                    D'JAWIR <span class="font-serif italic text-orange-200 text-lg normal-case">Angkringan</span>
+                </h1>
+                <p class="text-xs tracking-[0.3em] text-orange-100 opacity-80 uppercase">Saben Dino Ono Struk'e</p>
+            </div>
+            <nav class="flex gap-2 overflow-x-auto bg-black/40 p-2 rounded-full backdrop-blur-sm shadow-inner">
+                <button onclick="switchTab('kasir')" class="hover:bg-orange-800 px-5 py-2 rounded-full text-sm font-bold transition">Kasir</button>
+                <button onclick="switchTab('menu')" class="hover:bg-orange-800 px-5 py-2 rounded-full text-sm font-bold transition">Menu</button>
+                <button onclick="switchTab('pengaturan')" class="hover:bg-orange-800 px-5 py-2 rounded-full text-sm font-bold transition">Edit QRIS</button>
+                <button onclick="switchTab('laporan')" class="hover:bg-orange-800 px-5 py-2 rounded-full text-sm font-bold transition">Laporan</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 no-print">
+        
+        <section id="tab-kasir" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+            <div class="lg:col-span-2">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold border-l-4 border-orange-900 pl-3 italic text-orange-900">Menu Angkringan</h2>
+                    <input type="text" id="search-menu" onkeyup="renderMenu()" placeholder="Cari wedangan/sego..." class="p-2 rounded-lg border border-stone-300 outline-none focus:ring-2 focus:ring-orange-800 shadow-sm">
+                </div>
+                <div id="menu-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-xl h-fit sticky top-4 border-t-8 border-orange-900">
+                <h2 class="text-xl font-bold mb-4 border-b pb-2 flex justify-between items-center text-orange-900">
+                    Keranjang Pesanan <button onclick="clearCart()" class="text-xs text-red-500 font-normal hover:underline uppercase">Reset</button>
+                </h2>
+                <div id="cart-items" class="space-y-3 mb-6 max-h-64 overflow-y-auto">
+                    <p class="text-stone-400 text-center py-4 italic text-sm">Belum ada pesanan masuk...</p>
+                </div>
+                
+                <div class="bg-orange-50 p-4 rounded-xl space-y-3 border border-orange-100 shadow-inner">
+                    <div class="flex justify-between font-black text-2xl text-stone-900 border-b border-orange-200 pb-2">
+                        <span>Total:</span>
+                        <span id="cart-total">Rp 0</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-500 uppercase mb-1">Jumlah Bayar (Rp):</label>
+                        <input type="number" id="input-bayar" oninput="hitungKembalian()" class="w-full p-3 border-2 border-stone-200 rounded-lg text-2xl font-bold focus:border-orange-800 outline-none bg-white transition-all" placeholder="0">
+                        <p class="text-[10px] text-stone-400 mt-1 italic">*Kosongkan jika bayar via QRIS Pas (Cashless)</p>
+                    </div>
+                    <div class="flex justify-between text-orange-900 font-bold text-lg pt-1">
+                        <span>Kembalian:</span>
+                        <span id="text-kembalian">Rp 0</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-6">
+                    <button onclick="prosesQRIS()" class="bg-blue-800 text-white py-4 rounded-xl font-bold hover:bg-blue-900 shadow-lg transition uppercase text-xs flex flex-col items-center justify-center">
+                        <span>SCAN QRIS</span>
+                        <span class="text-[8px] opacity-70">+ CETAK STRUK</span>
+                    </button>
+                    <button onclick="prosesTransaksi('TUNAI')" class="bg-orange-900 text-white py-4 rounded-xl font-bold hover:bg-black shadow-lg transition uppercase text-xs flex flex-col items-center justify-center">
+                        <span>BAYAR TUNAI</span>
+                        <span class="text-[8px] opacity-70">+ CETAK STRUK</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-pengaturan" class="hidden">
+            <div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-md text-center border-t-8 border-orange-900">
+                <h2 class="text-2xl font-bold mb-6 italic text-orange-900">Upload QRIS Toko</h2>
+                <div class="mb-6 p-4 border-4 border-double border-stone-300 rounded-xl bg-stone-50">
+                    <img id="qris-preview" src="https://via.placeholder.com/250x300?text=Upload+QRIS+Disini" class="mx-auto max-h-80 shadow-md rounded">
+                </div>
+                <label class="bg-orange-900 text-white px-6 py-3 rounded-lg font-bold cursor-pointer hover:bg-black transition block">
+                    PILIH GAMBAR
+                    <input type="file" id="qris-upload" accept="image/*" class="hidden" onchange="handleQRUpload(this)">
+                </label>
+            </div>
+        </section>
+
+        <section id="tab-menu" class="hidden">
+            <div class="bg-white p-6 rounded-xl shadow-md mb-6 border-l-8 border-orange-900">
+                <h2 class="text-xl font-bold mb-4 italic uppercase text-sm tracking-widest">Tambah Menu Baru</h2>
+                <form id="form-menu" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input type="hidden" id="edit-index">
+                    <input type="text" id="menu-nama" placeholder="Nama Menu" class="p-3 border rounded-lg outline-none" required>
+                    <input type="number" id="menu-harga" placeholder="Harga" class="p-3 border rounded-lg outline-none" required>
+                    <input type="number" id="menu-stok" placeholder="Stok" class="p-3 border rounded-lg outline-none" required>
+                    <button type="submit" class="bg-orange-900 text-white p-3 rounded-lg font-bold hover:bg-black transition">Simpan</button>
+                </form>
+            </div>
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-stone-200">
+                <table class="w-full text-left">
+                    <thead class="batik-header text-white">
+                        <tr><th class="p-4">Menu</th><th class="p-4">Harga</th><th class="p-4 text-center">Stok</th><th class="p-4 text-center">Aksi</th></tr>
+                    </thead>
+                    <tbody id="table-menu-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="tab-laporan" class="hidden">
+            <div id="laporan-summary" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-8 border-orange-900">
+                <h2 class="text-xl font-bold mb-4 italic">Riwayat Penjualan</h2>
+                <div id="riwayat-order" class="space-y-3"></div>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-qris" class="fixed inset-0 bg-black/90 flex items-center justify-center hidden z-50 no-print">
+        <div class="bg-white p-6 rounded-2xl text-center max-w-sm w-full mx-4 shadow-2xl">
+            <h3 class="font-bold text-xl mb-4 text-orange-900 italic">Scan QRIS Pembayaran</h3>
+            <img id="modal-qris-img" src="" alt="QRIS" class="mx-auto mb-6 border-4 border-stone-100 rounded-lg min-h-[250px] object-contain">
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="hideQRIS()" class="bg-stone-200 text-stone-800 py-3 rounded-lg font-bold">Batal</button>
+                <button onclick="konfirmasiQRISLunas()" class="bg-green-700 text-white py-3 rounded-lg font-bold shadow-lg">LUNAS & PRINT</button>
+            </div>
+            <p class="text-[10px] text-stone-400 mt-4 italic">*Pastikan dana sudah masuk ke m-banking sebelum klik konfirmasi</p>
+        </div>
+    </div>
+
+    <div id="print-area" class="print-only font-mono-receipt text-[10pt] w-[58mm] mx-auto p-2">
+        <div class="text-center border-b border-black pb-2 mb-2">
+            <h2 class="text-lg font-bold">D'JAWIR</h2>
+            <p class="text-[7pt]">Angkringan Tradisional</p>
+            <p class="text-[7pt]" id="print-waktu"></p>
+            <p class="text-[7pt]">No: <span id="print-id"></span></p>
+        </div>
+        <table class="w-full mb-2 text-[9pt]">
+            <tbody id="print-items-body"></tbody>
+        </table>
+        <div class="border-t border-dashed border-black pt-2 space-y-1 text-[9pt]">
+            <div class="flex justify-between font-bold"><span>TOTAL</span> <span id="print-total"></span></div>
+            <div class="flex justify-between"><span>METODE</span> <span id="print-metode"></span></div>
+            <div class="flex justify-between"><span>BAYAR</span> <span id="print-bayar"></span></div>
+            <div class="flex justify-between"><span>KEMBALI</span> <span id="print-kembali"></span></div>
+        </div>
+        <div class="text-center mt-6 text-[8pt]">
+            Matur Nuwun Sanget!<br>Sugeng Kondur.
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STATE ---
+        let menus = JSON.parse(localStorage.getItem('djawir_menu')) || [
+            {nama: 'Nasi Kucing Sambal', harga: 3500, stok: 50},
+            {nama: 'Sate Usus Bakar', harga: 2000, stok: 30},
+            {nama: 'Wedang Jahe Geprek', harga: 5500, stok: 20}
+        ];
+        let history = JSON.parse(localStorage.getItem('djawir_history')) || [];
+        let qrisPhoto = localStorage.getItem('djawir_qris') || "";
+        let cart = [];
+
+        // --- NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            if(tabId === 'kasir') renderMenu();
+            if(tabId === 'menu') renderTableMenu();
+            if(tabId === 'laporan') renderLaporan();
+            if(tabId === 'pengaturan') initPengaturan();
+        }
+
+        // --- QRIS HANDLER ---
+        function initPengaturan() {
+            if(qrisPhoto) document.getElementById('qris-preview').src = qrisPhoto;
+        }
+
+        function handleQRUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    qrisPhoto = e.target.result;
+                    localStorage.setItem('djawir_qris', qrisPhoto);
+                    document.getElementById('qris-preview').src = qrisPhoto;
+                    alert("QRIS Berhasil Diupdate!");
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function prosesQRIS() {
+            if (cart.length === 0) return alert("Pilih menu dulu!");
+            if (!qrisPhoto) return alert("Upload foto QRIS di menu 'Edit QRIS' dulu!");
+            document.getElementById('modal-qris-img').src = qrisPhoto;
+            document.getElementById('modal-qris').classList.remove('hidden');
+        }
+
+        function konfirmasiQRISLunas() {
+            const total = cart.reduce((acc, curr) => acc + (curr.harga * curr.qty), 0);
+            // Untuk QRIS, bayar dianggap pas (sama dengan total)
+            prosesTransaksi('QRIS', total);
+            hideQRIS();
+        }
+
+        function hideQRIS() { document.getElementById('modal-qris').classList.add('hidden'); }
+
+        // --- CORE LOGIC KASIR ---
+        function renderMenu() {
+            const grid = document.getElementById('menu-grid');
+            const search = document.getElementById('search-menu').value.toLowerCase();
+            const filtered = menus.filter(m => m.nama.toLowerCase().includes(search));
+
+            grid.innerHTML = filtered.map((m, originalIdx) => {
+                const idx = menus.findIndex(item => item.nama === m.nama);
+                return `
+                <div onclick="addToCart(${idx})" class="card-menu bg-white p-4 rounded-xl shadow-sm cursor-pointer border-b-4 border-orange-900 hover:shadow-md transition-all">
+                    <h3 class="font-bold text-stone-700">${m.nama}</h3>
+                    <div class="flex justify-between items-center mt-3">
+                        <span class="text-orange-900 font-black">Rp ${m.harga.toLocaleString()}</span>
+                        <span class="text-[10pt] px-2 py-0.5 rounded ${m.stok < 5 ? 'bg-red-100 text-red-600 font-bold animate-pulse' : 'bg-stone-100 text-stone-500'}">Stok: ${m.stok}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function addToCart(idx) {
+            if (menus[idx].stok <= 0) return alert("Stok Menipis/Habis!");
+            const existing = cart.find(i => i.nama === menus[idx].nama);
+            if (existing) {
+                if (existing.qty < menus[idx].stok) existing.qty++;
+                else return alert("Stok Habis!");
+            } else {
+                cart.push({...menus[idx], indexOriginal: idx, qty: 1});
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            if (cart.length === 0) {
+                container.innerHTML = '<p class="text-stone-400 text-center py-4 italic text-sm">Belum ada pesanan...</p>';
+                document.getElementById('cart-total').innerText = 'Rp 0';
+                return;
+            }
+            let total = 0;
+            container.innerHTML = cart.map((item, idx) => {
+                total += item.harga * item.qty;
+                return `
+                <div class="flex justify-between items-center bg-stone-50 p-3 rounded-lg border border-stone-200">
+                    <div class="flex-1">
+                        <span class="font-bold text-sm block">${item.nama}</span>
+                        <span class="text-xs text-orange-900 font-bold">Rp ${item.harga.toLocaleString()} x ${item.qty}</span>
+                    </div>
+                    <button onclick="removeFromCart(${idx})" class="text-red-500 font-bold px-2 text-xl">×</button>
+                </div>`;
+            }).join('');
+            document.getElementById('cart-total').innerText = 'Rp ' + total.toLocaleString();
+            hitungKembalian();
+        }
+
+        function removeFromCart(idx) { cart.splice(idx, 1); renderCart(); }
+
+        function hitungKembalian() {
+            const total = cart.reduce((acc, curr) => acc + (curr.harga * curr.qty), 0);
+            const bayar = parseInt(document.getElementById('input-bayar').value) || 0;
+            const kembalian = bayar - total;
+            document.getElementById('text-kembalian').innerText = 'Rp ' + (kembalian > 0 ? kembalian.toLocaleString() : 0);
+        }
+
+        function clearCart() { cart = []; renderCart(); document.getElementById('input-bayar').value = ''; }
+
+        function prosesTransaksi(metode, nominalQRIS = null) {
+            if (cart.length === 0) return alert("Pilih menu dulu!");
+            const total = cart.reduce((acc, curr) => acc + (curr.harga * curr.qty), 0);
+            const bayar = nominalQRIS || parseInt(document.getElementById('input-bayar').value) || 0;
+
+            if (bayar < total) return alert("Uang bayar kurang!");
+
+            // Potong Stok
+            cart.forEach(item => menus[item.indexOriginal].stok -= item.qty);
+
+            // Simpan Histori
+            const order = {
+                id: Math.floor(Math.random() * 100000),
+                waktu: new Date().toLocaleString('id-ID'),
+                items: [...cart],
+                total: total,
+                bayar: bayar,
+                metode: metode
+            };
+            history.push(order);
+            saveData();
+
+            // Jalankan Print
+            siapkanStruk(order);
+            setTimeout(() => { window.print(); }, 500);
+
+            // Reset UI
+            clearCart();
+            renderMenu();
+        }
+
+        function siapkanStruk(order) {
+            document.getElementById('print-id').innerText = order.id;
+            document.getElementById('print-waktu').innerText = order.waktu;
+            document.getElementById('print-total').innerText = 'Rp ' + order.total.toLocaleString();
+            document.getElementById('print-metode').innerText = order.metode;
+            document.getElementById('print-bayar').innerText = 'Rp ' + order.bayar.toLocaleString();
+            document.getElementById('print-kembali').innerText = 'Rp ' + (order.bayar - order.total).toLocaleString();
+            document.getElementById('print-items-body').innerHTML = order.items.map(i => `
+                <tr><td class="py-1">${i.nama} x${i.qty}</td><td class="text-right">Rp ${(i.harga * i.qty).toLocaleString()}</td></tr>
+            `).join('');
+        }
+
+        // --- MANAGEMENT LOGIC ---
+        function renderTableMenu() {
+            const body = document.getElementById('table-menu-body');
+            body.innerHTML = menus.map((m, idx) => `
+                <tr class="border-b">
+                    <td class="p-4 font-bold uppercase text-xs">${m.nama}</td>
+                    <td class="p-4">Rp ${m.harga.toLocaleString()}</td>
+                    <td class="p-4 text-center"><span class="px-2 py-1 rounded font-bold ${m.stok < 10 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}">${m.stok}</span></td>
+                    <td class="p-4 text-center">
+                        <button onclick="editMenu(${idx})" class="text-blue-600 hover:underline mr-2 text-xs font-bold">EDIT</button>
+                        <button onclick="hapusMenu(${idx})" class="text-red-600 hover:underline text-xs font-bold">HAPUS</button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        document.getElementById('form-menu').onsubmit = function(e) {
+            e.preventDefault();
+            const index = document.getElementById('edit-index').value;
+            const newItem = {
+                nama: document.getElementById('menu-nama').value,
+                harga: parseInt(document.getElementById('menu-harga').value),
+                stok: parseInt(document.getElementById('menu-stok').value)
+            };
+            if (index !== "") menus[index] = newItem;
+            else menus.push(newItem);
+            this.reset();
+            document.getElementById('edit-index').value = "";
+            saveData();
+            renderTableMenu();
+            renderMenu();
+        };
+
+        function editMenu(idx) {
+            document.getElementById('edit-index').value = idx;
+            document.getElementById('menu-nama').value = menus[idx].nama;
+            document.getElementById('menu-harga').value = menus[idx].harga;
+            document.getElementById('menu-stok').value = menus[idx].stok;
+        }
+
+        function hapusMenu(idx) { if(confirm('Hapus?')) { menus.splice(idx, 1); saveData(); renderTableMenu(); renderMenu(); } }
+
+        function renderLaporan() {
+            const total = history.reduce((acc, curr) => acc + curr.total, 0);
+            document.getElementById('laporan-summary').innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow border-l-8 border-orange-900">
+                    <h3 class="text-xs font-bold text-stone-400 uppercase">Omzet Penjualan</h3>
+                    <p class="text-3xl font-black text-orange-900">Rp ${total.toLocaleString()}</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow border-l-8 border-blue-900">
+                    <h3 class="text-xs font-bold text-stone-400 uppercase">Total Transaksi</h3>
+                    <p class="text-3xl font-black text-blue-900">${history.length}</p>
+                </div>`;
+            document.getElementById('riwayat-order').innerHTML = history.slice().reverse().map(h => `
+                <div class="bg-stone-50 p-4 rounded-lg flex justify-between border-b-2 border-stone-200">
+                    <div>
+                        <span class="text-[10pt] font-bold text-stone-800">${h.waktu} (${h.metode})</span>
+                        <div class="text-xs text-stone-500 mt-1">${h.items.map(i => i.nama + ' x' + i.qty).join(', ')}</div>
+                    </div>
+                    <span class="font-bold text-orange-900">Rp ${h.total.toLocaleString()}</span>
+                </div>`).join('');
+        }
+
+        function saveData() {
+            localStorage.setItem('djawir_menu', JSON.stringify(menus));
+            localStorage.setItem('djawir_history', JSON.stringify(history));
+        }
+
+        renderMenu();
+    </script>
+</body>
+</html>
