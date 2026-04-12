@@ -1,7 +1,12 @@
 {
-  "short_name": "Nama Toko",
-  "name": "Nama Lengkap Toko Anda",
+  "short_name": "D'jawir",
+  "name": "D'jawir Kasir Toko",
   "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
