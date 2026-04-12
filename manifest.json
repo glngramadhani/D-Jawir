@@ -1,0 +1,16 @@
+{
+  "short_name": "Nama Toko",
+  "name": "Nama Lengkap Toko Anda",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
