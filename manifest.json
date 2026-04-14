@@ -1,13 +1,21 @@
 {
-  "background_color": "#ffffff",
+  "background_color": "#431407",
   "dir": "ltr",
   "display": "standalone",
   "name": "D'Jawir",
   "orientation": "any",
   "scope": "/",
   "short_name": "D'Jawir",
-  "start_url": "/",
+  "start_url": "index.html",
   "theme_color": "#be975d",
   "id": "https://glngramadhani.github.io/D-Jawir/",
   "description": "Aplikasi manajemen penjualan sekaligus sistem kasir digital yang memiliki fitur lengkap seperti cetak struk"
+  "icons": [
+    {
+      "src":icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
